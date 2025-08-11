@@ -1,0 +1,110 @@
+<!-- Backdrop for overlay mode -->
+@if (showBackdrop()) {
+  <div
+    class="docking-panel-backdrop"
+    [@backdropFade]
+    (click)="onBackdropClick()"
+    role="presentation">
+  </div>
+}
+
+<!-- Main container with dynamic class binding -->
+<div
+  #panel
+  class="docking-panel-container"
+  [class]="'docking-panel-' + side() + ' docking-panel-mode-' + mode() + (isExpanded() ? ' docking-panel-expanded' : ' docking-panel-collapsed') + (isResizing() ? ' docking-panel-resizing' : '')"
+  [@panelState]="{ value: animationState(), params: animationParams() }"
+  role="complementary"
+  [attr.aria-label]="'Docking panel on ' + side() + ' side'">
+
+  <!-- Tab strip -->
+  <div
+    class="docking-panel-tabs"
+    [class.horizontal]="isHorizontalDock()"
+    [class.vertical]="isVerticalDock()"
+    role="tablist"
+    [attr.aria-orientation]="isHorizontalDock() ? 'horizontal' : 'vertical'">
+
+    @for (tab of allTabs(); track tab.id; let i = $index) {
+      <button
+        type="button"
+        class="docking-panel-tab"
+        [class.active]="i === activeTabIndex()"
+        [disabled]="tab.disabled"
+        [attr.role]="'tab'"
+        [attr.tabindex]="i === activeTabIndex() ? 0 : -1"
+        [attr.aria-selected]="i === activeTabIndex()"
+        [attr.aria-controls]="'panel-content-' + tab.id"
+        [attr.aria-label]="tab.ariaLabel || tab.label"
+        [matTooltip]="tab.label"
+        [matTooltipPosition]="getTooltipPosition()"
+        (click)="onTabClick(i)"
+        (keydown)="onTabKeydown($event, i)">
+
+        @if (tab.icon) {
+          <mat-icon [fontIcon]="tab.icon"></mat-icon>
+        }
+        <span class="tab-label" [class.sr-only]="isExpanded()">{{ tab.label }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Panel content -->
+  @if (isExpanded() && activeTab()) {
+    <div
+      class="docking-panel-content"
+      [@contentFade]
+      [attr.id]="'panel-content-' + (activeTab().id || '')"
+      role="tabpanel"
+      [attr.aria-labelledby]="'tab-' + activeTabIndex()">
+      <!-- Projected content -->
+      @if (activeTab().content) {
+        <ng-container *ngTemplateOutlet="activeTab()!.content"></ng-container>
+      }
+      <!-- Programmatic content placeholder -->
+      @if (!activeTab().content && activeTab()) {
+        <div class="default-content">
+          <h3>{{ activeTab().label }}</h3>
+          <p>Content for {{ activeTab().label }} tab</p>
+          <small>This tab was added programmatically. Use content projection for custom content.</small>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Resize handle -->
+  @if (resizable() && isExpanded()) {
+    <div
+      #resizeHandle
+      class="docking-panel-resize-handle"
+      [class]="'resize-handle-' + side()"
+      role="separator"
+      [attr.aria-label]="'Resize ' + side() + ' panel'"
+      [attr.aria-valuenow]="currentSize()"
+      [attr.aria-valuemin]="minSize()"
+      [attr.aria-valuemax]="maxSize()"
+      tabindex="0"
+      (mousedown)="onResizeStart($event)"
+      (touchstart)="onResizeStart($event)">
+      <div class="resize-handle-line"></div>
+    </div>
+  }
+</div>
+
+<!-- Main content area (only for push mode) -->
+@if (isPushMode()) {
+  <div
+    class="docking-panel-main-content"
+    [class]="'main-content-push-' + side()"
+    [style]="getMainContentStyle()">
+    <ng-content></ng-content>
+  </div>
+}
+
+<!-- Main content area (for overlay mode) -->
+@if (isOverlayMode()) {
+  <div
+    class="docking-panel-main-content overlay-content">
+    <ng-content></ng-content>
+  </div>
+}

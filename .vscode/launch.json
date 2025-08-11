@@ -3,17 +3,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng serve",
+      "name": "ng serve (wsl)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+      "preLaunchTask": "start (wsl clean)",
+      "url": "http://localhost:4200/",
+      "serverReadyAction": {
+        "pattern": "(Compiled successfully|Angular Live Development Server is listening|Local server is running)",
+        "uriFormat": "http://localhost:4200",
+        "action": "debugWithChrome"
+      }
     },
     {
-      "name": "ng test",
+      "name": "ng test (wsl)",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: test",
+      "preLaunchTask": "test (wsl)",
       "url": "http://localhost:9876/debug.html"
     }
   ]

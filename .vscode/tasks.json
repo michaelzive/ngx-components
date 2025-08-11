@@ -1,42 +1,63 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  // Clean task definitions for Windows & WSL execution (process type avoids nested quoting issues)
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "npm",
-      "script": "start",
+      "label": "start (windows cmd)",
+      "type": "process",
+      "command": "C:/Windows/System32/cmd.exe",
+      "args": ["/d", "/c", "npm", "run", "start"],
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
-      "problemMatcher": {
-        "owner": "typescript",
-        "pattern": "$tsc",
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": {
-            "regexp": "(.*?)"
-          },
-          "endsPattern": {
-            "regexp": "bundle generation complete"
-          }
-        }
-      }
+      "problemMatcher": []
     },
     {
-      "type": "npm",
-      "script": "test",
+      "label": "start (wsl clean)",
+      "type": "process",
+      "command": "C:/Windows/System32/wsl.exe",
+      "args": [
+        "-d",
+        "Ubuntu",
+        "bash",
+        "-lc",
+        "cd \"$(wslpath -a '${workspaceFolder}')\"; if [ -s \"$HOME/.nvm/nvm.sh\" ]; then . \"$HOME/.nvm/nvm.sh\"; fi; nvm use --silent >/dev/null 2>&1 || true; npm run start"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
-      "problemMatcher": {
-        "owner": "typescript",
-        "pattern": "$tsc",
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": {
-            "regexp": "(.*?)"
-          },
-          "endsPattern": {
-            "regexp": "bundle generation complete"
+      "problemMatcher": [
+        {
+          "owner": "angular",
+          "pattern": { "regexp": "^$" },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".*Starting development server.*|.*Application bundle generation complete.*",
+            "endsPattern": ".*(Application bundle generation complete|Compiled successfully|http://localhost:4200/).*"
           }
         }
-      }
+      ]
+    },
+    {
+      "label": "start (wsl direct no nvm)",
+      "type": "process",
+      "command": "C:/Windows/System32/wsl.exe",
+      "args": ["-d", "Ubuntu", "npm", "run", "start"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "test (wsl)",
+      "type": "process",
+      "command": "C:/Windows/System32/wsl.exe",
+      "args": [
+        "-d",
+        "Ubuntu",
+        "bash",
+        "-lc",
+        "cd \"$(wslpath -a '${workspaceFolder}')\"; if [ -s \"$HOME/.nvm/nvm.sh\" ]; then . \"$HOME/.nvm/nvm.sh\"; fi; nvm use --silent >/dev/null 2>&1 || true; npm test"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
     }
   ]
 }
