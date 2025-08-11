@@ -5,7 +5,10 @@ export const routes: Routes = [
 		path: 'docking-panel-demo',
 		loadComponent: () => import('./components/docking-panel/docking-panel-demo.component').then(m => m.DockingPanelDemoComponent)
 	},
+  {
+    path: 'multiple-docking-panel-demo',
+    loadComponent: () => import('./components/docking-panel/docking-multipanel-demo.component').then(m => m.DockingMultiPanelDemoComponent)
+  },
 	// Legacy path retained as redirect for backward compatibility
-	{ path: 'drawer-panel-demo', pathMatch: 'full', redirectTo: 'docking-panel-demo' },
-	{ path: '', pathMatch: 'full', redirectTo: 'docking-panel-demo' }
+	{ path: '', pathMatch: 'full', redirectTo: 'multiple-docking-panel-demo' }
 ];

@@ -11,7 +11,9 @@
   --docking-panel-on-surface: var(--mat-sys-on-surface);
   --docking-panel-primary: var(--mat-sys-primary);
   --docking-panel-shadow: var(--mat-sys-shadow);
-  
+  /* Duration & easing for cross-axis sliding when adjacent panels expand/collapse */
+  --docking-panel-cross-axis-transition: 250ms ease;
+
   display: block;
   position: relative;
   width: 100%;
@@ -39,11 +41,17 @@
   display: flex;
   z-index: var(--docking-panel-z-index);
   box-shadow: var(--mat-sys-elevation-level2);
-  
+  /* Smooth cross-axis movement (top/bottom for vertical panels, left/right for horizontal panels) */
+  transition:
+    top var(--docking-panel-cross-axis-transition),
+    bottom var(--docking-panel-cross-axis-transition),
+    left var(--docking-panel-cross-axis-transition),
+    right var(--docking-panel-cross-axis-transition);
+
   &.docking-panel-resizing {
     user-select: none;
     pointer-events: none;
-    
+
     .docking-panel-resize-handle {
       pointer-events: all;
     }
@@ -54,18 +62,75 @@
 .docking-panel-left,
 .docking-panel-right {
   top: 0;
-  height: 100%;
+  bottom: 0; // anchor to bottom so height doesn't depend on parent explicit height
+  height: auto;
   flex-direction: row;
-  
+
   .docking-panel-tabs {
     flex-direction: column;
     width: var(--docking-panel-tab-size);
     border-right: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
   }
-  
+
   .docking-panel-content {
     flex: 1;
     min-width: 0;
+  }
+}
+
+// Reorder children for left & top so collapsed translate reveals tab strip instead of empty content
+// Option B behavior for left & top:
+// Collapsed: tabs sit on the visible trailing edge (right for left dock, bottom for top dock).
+// Expanded: tabs move to leading edge (left / top) adjacent to content.
+
+.docking-panel-left {
+  display: flex;
+  flex-direction: row;
+
+  // Default (expanded) ordering: tabs then content
+  &.docking-panel-expanded {
+    .docking-panel-tabs {
+      order: 0;
+      margin-left: 0;
+      border-right: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
+      border-left: none;
+    }
+    .docking-panel-content { order: 1; }
+  }
+
+  &.docking-panel-collapsed {
+    .docking-panel-content { order: 0; }
+    .docking-panel-tabs {
+      order: 1;            // move tabs to trailing edge
+      margin-left: auto;   // push to right side
+      border-left: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
+      border-right: none;
+    }
+  }
+}
+
+.docking-panel-top {
+  display: flex;
+  flex-direction: column;
+
+  &.docking-panel-expanded {
+    .docking-panel-tabs {
+      order: 0;
+      margin-top: 0;
+      border-bottom: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
+      border-top: none;
+    }
+    .docking-panel-content { order: 1; }
+  }
+
+  &.docking-panel-collapsed {
+    .docking-panel-content { order: 0; }
+    .docking-panel-tabs {
+      order: 1;            // tabs to bottom edge
+      margin-top: auto;
+      border-top: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
+      border-bottom: none;
+    }
   }
 }
 
@@ -82,15 +147,16 @@
 .docking-panel-top,
 .docking-panel-bottom {
   left: 0;
-  width: 100%;
+  right: 0; // anchor horizontally so width doesn't depend on parent explicit width
+  width: auto;
   flex-direction: column;
-  
+
   .docking-panel-tabs {
     flex-direction: row;
     height: var(--docking-panel-tab-size);
     border-bottom: var(--docking-panel-border-width) solid var(--docking-panel-border-color);
   }
-  
+
   .docking-panel-content {
     flex: 1;
     min-height: 0;
@@ -116,16 +182,28 @@
   position: absolute;
 }
 
+/* When globally anchored (layout sets inline position:fixed), ensure full edge anchoring */
+:host-context(.dock-debug) .docking-panel-container[style*='position:fixed'] {
+  /* Edges already defined by side classes; ensure stacking above local content */
+  z-index: var(--docking-panel-z-index);
+}
+
+/* Ensure fixed push panels stretch along their primary axis */
+.docking-panel-left[style*='position:fixed'],
+.docking-panel-right[style*='position:fixed'] { height: auto; }
+.docking-panel-top[style*='position:fixed'],
+.docking-panel-bottom[style*='position:fixed'] { width: auto; }
+
 // Tab strip
 .docking-panel-tabs {
   display: flex;
   background: var(--docking-panel-surface);
   z-index: 2;
-  
+
   &.vertical {
     min-width: var(--docking-panel-tab-size);
   }
-  
+
   &.horizontal {
     min-height: var(--docking-panel-tab-size);
   }
@@ -148,20 +226,20 @@
   font-weight: var(--mat-sys-body-medium-weight);
   min-width: var(--docking-panel-tab-size);
   min-height: var(--docking-panel-tab-size);
-  
+
   &:hover:not(:disabled) {
     background: var(--mat-sys-surface-variant);
   }
-  
+
   &:focus-visible {
     outline: 2px solid var(--docking-panel-primary);
     outline-offset: -2px;
   }
-  
+
   &.active {
     background: var(--mat-sys-secondary-container);
     color: var(--mat-sys-on-secondary-container);
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -169,24 +247,24 @@
       z-index: 1;
     }
   }
-  
+
   &:disabled {
     color: var(--mat-sys-on-surface-variant);
     cursor: not-allowed;
     opacity: 0.6;
   }
-  
+
   mat-icon {
     font-size: 20px;
     width: 20px;
     height: 20px;
   }
-  
+
   .tab-label {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    
+
     &.sr-only {
       position: absolute;
       width: 1px;
@@ -238,25 +316,25 @@
   overflow: auto;
   position: relative;
   z-index: 1;
-  
+
   .default-content {
     padding: 24px;
     text-align: center;
     color: var(--docking-panel-on-surface);
-    
+
     h3 {
       margin: 0 0 16px;
       font-family: var(--mat-sys-headline-small-font);
       font-size: var(--mat-sys-headline-small-size);
       font-weight: var(--mat-sys-headline-small-weight);
     }
-    
+
     p {
       margin: 0 0 8px;
       font-family: var(--mat-sys-body-large-font);
       font-size: var(--mat-sys-body-large-size);
     }
-    
+
     small {
       color: var(--mat-sys-on-surface-variant);
       font-family: var(--mat-sys-body-small-font);
@@ -271,17 +349,17 @@
   background: transparent;
   z-index: 3;
   cursor: pointer;
-  
+
   &:focus-visible {
     outline: 2px solid var(--docking-panel-primary);
     outline-offset: 1px;
   }
-  
+
   .resize-handle-line {
     background: var(--docking-panel-border-color);
     transition: background-color 200ms ease-out;
   }
-  
+
   &:hover .resize-handle-line,
   &:focus .resize-handle-line {
     background: var(--docking-panel-primary);
@@ -294,7 +372,7 @@
   bottom: 0;
   width: 8px;
   cursor: col-resize;
-  
+
   .resize-handle-line {
     position: absolute;
     top: 50%;
@@ -320,7 +398,7 @@
   right: 0;
   height: 8px;
   cursor: row-resize;
-  
+
   .resize-handle-line {
     position: absolute;
     left: 50%;
@@ -345,19 +423,64 @@
   height: 100%;
   overflow: auto;
   transition: margin 250ms ease-out;
-  
+
   &.overlay-content {
     position: relative;
     z-index: 1;
   }
 }
 
+// If no projected content is provided (demo scenario with standalone global panel), the
+// overlay main-content element ends up empty but still spans the viewport and blocks
+// interaction with underlying page controls. Allow pointer events to pass through when empty.
+.docking-panel-main-content.overlay-content:empty {
+  pointer-events: none;
+  background: transparent;
+}
+// Same behavior for push mode or any variant: if no projected content, don't block clicks.
+.docking-panel-main-content:empty {
+  pointer-events: none;
+  background: transparent;
+}
+// Avoid an empty push-mode main content layer blocking underlying UI.
+.docking-panel-mode-push + .docking-panel-main-content:empty,
+.docking-panel-mode-push .docking-panel-main-content:empty {
+  pointer-events: none;
+}
+
+/* === Diagnostic / Debug Styles (temporary) ===
+   Add class .docking-panel-debug-outline to the component host (or ancestor)
+   to visualize hit areas & stacking while troubleshooting click interception. */
+:host-context(.docking-panel-debug-outline) .docking-panel-container {
+  outline: 2px solid rgba(255,0,255,0.6);
+  box-shadow: 0 0 0 2px rgba(255,0,255,0.3) inset;
+}
+:host-context(.docking-panel-debug-outline) .docking-panel-tabs { outline: 1px solid rgba(0,128,255,0.6); }
+:host-context(.docking-panel-debug-outline) .docking-panel-content { outline: 1px dashed rgba(255,165,0,0.8); }
+:host-context(.docking-panel-debug-outline) .docking-panel-main-content { outline: 1px dashed rgba(0,200,0,0.7); }
+
+/* Visually mark full-viewport coverage if any main-content mistakenly expands. */
+:host-context(.docking-panel-debug-outline) .docking-panel-main-content.overlay-content:not(:empty) {
+  background: linear-gradient(45deg, rgba(0,200,0,0.04), rgba(0,200,0,0));
+}
+
+/* === Optional vivid debug colors ===
+  Add class .dock-debug to any ancestor (e.g. <body class="dock-debug">) to visualize regions. */
+:host-context(.dock-debug) .docking-panel-container { background: rgba(255,105,180,0.30); /* hot pink */ }
+:host-context(.dock-debug) .docking-panel-tabs { background: rgba(165,42,42,0.55); /* brown */ }
+:host-context(.dock-debug) .docking-panel-tab { background: rgba(255,69,0,0.35); /* orange-red */ }
+:host-context(.dock-debug) .docking-panel-tab.active { background: rgba(50,205,50,0.55); /* lime green */ }
+:host-context(.dock-debug) .docking-panel-content { background: rgba(70,130,180,0.45); /* steel blue */ }
+:host-context(.dock-debug) .docking-panel-main-content { background: rgba(238,130,238,0.25); /* violet */ }
+:host-context(.dock-debug) .docking-panel-resize-handle { background: rgba(0,0,0,0.10); }
+:host-context(.dock-debug) .docking-panel-resize-handle .resize-handle-line { background: #ff0000 !important; }
+
 // Collapsed state adjustments
 .docking-panel-collapsed {
   .docking-panel-content {
     display: none;
   }
-  
+
   .docking-panel-resize-handle {
     display: none;
   }
@@ -375,18 +498,18 @@
   :host {
     --docking-panel-tab-size: 44px;
   }
-  
+
   .docking-panel-tab {
     min-width: 44px;
     min-height: 44px;
-    
+
     mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
     }
   }
-  
+
   .docking-panel-content .default-content {
     padding: 16px;
   }
@@ -397,12 +520,12 @@
   :host {
     --docking-panel-border-width: 2px;
   }
-  
+
   .docking-panel-tab {
     &:focus-visible {
       outline-width: 3px;
     }
-    
+
     &.active::before {
       width: 4px;
       height: 4px;

@@ -9,7 +9,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { FormsModule } from '@angular/forms';
 import { DockingPanelComponent } from './docking-panel.component';
 import { DockingPanelTabDirective } from './docking-panel-tab.directive';
 import {
@@ -26,7 +25,6 @@ import {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatIconModule,
@@ -57,8 +55,8 @@ import {
             <div class="control-group">
               <label>Dock Position</label>
               <mat-button-toggle-group
-                [ngModel]="dockSide()"
-                (ngModelChange)="dockSide.set($event); onConfigChange()"
+                [value]="dockSide()"
+                (change)="dockSide.set($event.value); onConfigChange()"
                 aria-label="Dock position">
                 <mat-button-toggle value="left">
                   <mat-icon>border_left</mat-icon> Left
@@ -79,8 +77,8 @@ import {
             <div class="control-group">
               <label>Interaction Mode</label>
               <mat-button-toggle-group
-                [ngModel]="dockMode()"
-                (ngModelChange)="dockMode.set($event); onConfigChange()"
+                [value]="dockMode()"
+                (change)="dockMode.set($event.value); onConfigChange()"
                 aria-label="Interaction mode">
                 <mat-button-toggle value="push">
                   <mat-icon>push_pin</mat-icon> Push
@@ -98,10 +96,11 @@ import {
                 min="200"
                 max="600"
                 step="20"
-                [ngModel]="initialSize()"
-                (input)="onSizeSliderChange($event)"
                 discrete>
-                <input matSliderThumb>
+                <input matSliderThumb
+                  [value]="initialSize()"
+                  (input)="initialSize.set($any($event.target).valueAsNumber); onConfigChange()"
+                />
               </mat-slider>
             </div>
 
@@ -112,33 +111,34 @@ import {
                 min="100"
                 max="1000"
                 step="50"
-                [ngModel]="animationDuration()"
-                (input)="onAnimationSliderChange($event)"
                 discrete>
-                <input matSliderThumb>
+                <input matSliderThumb
+                  [value]="animationDuration()"
+                  (input)="animationDuration.set($any($event.target).valueAsNumber); onConfigChange()"
+                />
               </mat-slider>
             </div>
 
             <!-- Boolean Options -->
             <div class="control-group checkboxes">
               <mat-checkbox
-                [ngModel]="hasBackdrop()"
-                (ngModelChange)="hasBackdrop.set($event); onConfigChange()">
+                [checked]="hasBackdrop()"
+                (change)="hasBackdrop.set($event.checked); onConfigChange()">
                 Show Backdrop
               </mat-checkbox>
               <mat-checkbox
-                [ngModel]="closeOnBackdropClick()"
-                (ngModelChange)="closeOnBackdropClick.set($event); onConfigChange()">
+                [checked]="closeOnBackdropClick()"
+                (change)="closeOnBackdropClick.set($event.checked); onConfigChange()">
                 Close on Backdrop Click
               </mat-checkbox>
               <mat-checkbox
-                [ngModel]="resizable()"
-                (ngModelChange)="resizable.set($event); onConfigChange()">
+                [checked]="resizable()"
+                (change)="resizable.set($event.checked); onConfigChange()">
                 Resizable
               </mat-checkbox>
               <mat-checkbox
-                [ngModel]="autoFocus()"
-                (ngModelChange)="autoFocus.set($event); onConfigChange()">
+                [checked]="autoFocus()"
+                (change)="autoFocus.set($event.checked); onConfigChange()">
                 Auto Focus
               </mat-checkbox>
             </div>
@@ -313,6 +313,8 @@ import {
       padding: 24px;
       max-width: 1200px;
       margin: 0 auto;
+  position: relative; /* ensure above global docking wrapper */
+  z-index: 20;
     }
 
     h1 {
@@ -409,7 +411,7 @@ import {
     .global-docking-wrapper {
       position: fixed;
       inset: 0;
-      z-index: 10; /* beneath backdrop/panel internal z-index */
+  z-index: 2000; /* above controls so tabs remain visible for left/top sides */
       pointer-events: none; /* allow panel to manage interactions */
     }
     .global-docking-wrapper app-docking-panel {
@@ -422,6 +424,11 @@ import {
     .global-docking-wrapper app-docking-panel ::ng-deep .docking-panel-backdrop,
     .global-docking-wrapper app-docking-panel ::ng-deep .docking-panel-main-content {
       pointer-events: auto;
+    }
+    /* In the demo we don't project main content, so the overlay main-content layer just blocks
+       clicks on the configuration controls. Disable pointer events for overlay variant. */
+    .global-docking-wrapper app-docking-panel ::ng-deep .docking-panel-main-content.overlay-content {
+      pointer-events: none;
     }
 
     .main-content {
@@ -628,15 +635,7 @@ export class DockingPanelDemoComponent {
     });
   }
 
-  onSizeSliderChange(event: any): void {
-    this.initialSize.set(event.target.value);
-    this.onConfigChange();
-  }
-
-  onAnimationSliderChange(event: any): void {
-    this.animationDuration.set(event.target.value);
-    this.onConfigChange();
-  }
+  // Removed ngModel handlers; direct valueChange bindings now update signals
 
   onTabChange(event: DockingPanelTabChangeEvent): void {
     this.addEvent('TAB_CHANGE', event);

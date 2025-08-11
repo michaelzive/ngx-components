@@ -13,6 +13,7 @@
   #panel
   class="docking-panel-container"
   [class]="'docking-panel-' + side() + ' docking-panel-mode-' + mode() + (isExpanded() ? ' docking-panel-expanded' : ' docking-panel-collapsed') + (isResizing() ? ' docking-panel-resizing' : '')"
+  [style]="containerInlineStyle()"
   [@panelState]="{ value: animationState(), params: animationParams() }"
   role="complementary"
   [attr.aria-label]="'Docking panel on ' + side() + ' side'">
@@ -92,7 +93,7 @@
 </div>
 
 <!-- Main content area (only for push mode) -->
-@if (isPushMode()) {
+@if (isPushMode() && !isLayoutManaged) {
   <div
     class="docking-panel-main-content"
     [class]="'main-content-push-' + side()"
@@ -102,7 +103,7 @@
 }
 
 <!-- Main content area (for overlay mode) -->
-@if (isOverlayMode()) {
+@if (isOverlayMode() && !isLayoutManaged) {
   <div
     class="docking-panel-main-content overlay-content">
     <ng-content></ng-content>

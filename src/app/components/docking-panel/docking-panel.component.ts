@@ -11,7 +11,11 @@ import {
   OnDestroy,
   ViewChild,
   ElementRef,
-  HostListener
+  HostListener,
+  Input,
+  OnInit,
+  OnChanges,
+  SimpleChanges
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -97,7 +101,7 @@ import { DockingPanelTabDirective } from './docking-panel-tab.directive';
     ])
   ]
 })
-export class DockingPanelComponent implements AfterContentInit, OnDestroy {
+export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnInit, OnChanges {
   // Inputs as signals
   readonly side = input<DockingSide>(DEFAULT_DOCKING_PANEL_CONFIG.side);
   readonly mode = input<DockingMode>(DEFAULT_DOCKING_PANEL_CONFIG.mode);
@@ -111,6 +115,15 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
   readonly autoFocus = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.autoFocus);
   readonly animationDuration = input<number>(DEFAULT_DOCKING_PANEL_CONFIG.animationDuration);
   readonly tabs = input<DockingPanelTab[]>([]);
+  // When true, panel participates in external layout host which applies push margins.
+  private readonly _layoutManaged = signal<boolean>(false);
+  @Input() set layoutManaged(value: boolean) { this._layoutManaged.set(value); }
+  get isLayoutManaged() { return this._layoutManaged(); }
+
+  // When true (set by layout), panel is anchored to viewport via position:fixed
+  private readonly _globalAnchored = signal<boolean>(false);
+  @Input() set globalAnchored(value: boolean) { this._globalAnchored.set(value); }
+  get isGlobalAnchored() { return this._globalAnchored(); }
 
   // Outputs
   readonly tabChange = output<DockingPanelTabChangeEvent>();
@@ -157,6 +170,28 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
     duration: this.animationDuration()
   }));
 
+  readonly containerInlineStyle = computed(() => {
+    if (!this.isGlobalAnchored || !this.isLayoutManaged) return '';
+    // For fixed panels spanning appropriate dimension, we just rely on side classes.
+    // Additional constraints can be added here if needed.
+    const off = this.crossAxisOffsets();
+    const pieces: string[] = ['position:fixed'];
+    if (this.side() === 'left' || this.side() === 'right') {
+      pieces.push(`top:${off.top}px`);
+      pieces.push(`bottom:${off.bottom}px`);
+    } else {
+      pieces.push(`left:${off.left}px`);
+      pieces.push(`right:${off.right}px`);
+    }
+    return pieces.join(';');
+  });
+
+  // Cross-axis offsets supplied by layout so tabs won’t be hidden
+  private readonly crossAxisOffsets = signal({ top: 0, bottom: 0, left: 0, right: 0 });
+  setCrossAxisOffsets(offsets: { top: number; bottom: number; left: number; right: number }) {
+    this.crossAxisOffsets.set(offsets);
+  }
+
   // Resize handling
   private dragStart = { x: 0, y: 0, size: 0 };
   private boundMouseMove = (e: MouseEvent) => this.onMouseMove(e);
@@ -164,9 +199,18 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
   private boundTouchMove = (e: TouchEvent) => this.onTouchMove(e);
   private boundTouchEnd = () => this.onTouchEnd();
 
-  constructor() {
-    // Initialize size from input
+  constructor() {}
+
+  ngOnInit(): void {
+    // Apply bound initial size after inputs resolved
     this.currentSize.set(this.initialSize());
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialSize'] && !this.isResizing()) {
+      // If initialSize input changes dynamically, sync current size only when not resizing
+      this.currentSize.set(this.initialSize());
+    }
   }
 
   ngAfterContentInit(): void {
@@ -193,7 +237,7 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
       ariaLabel: directive.ariaLabel || directive.label
     })) || [];
     this.projectedTabList.set(tabs);
-    
+
     // Ensure activeTabIndex is within bounds
     const allTabs = this.allTabs();
     if (allTabs.length === 0) {
@@ -209,9 +253,9 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
     if (index < 0 || index >= allTabs.length) {
       return; // Invalid index
     }
-    
+
     const previousIndex = this.activeTabIndex();
-    
+
     if (this.activeTabIndex() === index && this.isExpanded()) {
       this.collapse();
     } else {
@@ -225,7 +269,7 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
 
   onTabKeydown(event: KeyboardEvent, index: number): void {
     const { key, shiftKey } = event;
-    
+
     switch (key) {
       case 'ArrowLeft':
       case 'ArrowUp':
@@ -266,10 +310,10 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
   private navigateTab(direction: number): void {
     const tabs = this.allTabs();
     let newIndex = this.activeTabIndex() + direction;
-    
+
     if (newIndex < 0) newIndex = tabs.length - 1;
     if (newIndex >= tabs.length) newIndex = 0;
-    
+
     this.activeTabIndex.set(newIndex);
   }
 
@@ -301,13 +345,13 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
   // Resize handling
   onResizeStart(event: MouseEvent | TouchEvent): void {
     if (!this.resizable() || !this.isExpanded()) return;
-    
+
     event.preventDefault();
     this.isResizing.set(true);
-    
+
     const clientX = event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
     const clientY = event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
-    
+
     this.dragStart = {
       x: clientX,
       y: clientY,
@@ -420,7 +464,7 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
       this.minSize(),
       Math.min(this.maxSize(), this.currentSize() + delta)
     );
-    
+
     this.currentSize.set(newSize);
     this.emitSizeChange(delta, false);
   }
@@ -441,8 +485,9 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy {
   }
 
   getMainContentStyle(): string {
-    if (!this.isPushMode() || !this.isExpanded()) return '';
-    
+  if (this.layoutManaged) return '';
+  if (!this.isPushMode() || !this.isExpanded()) return '';
+
     const size = this.currentSize();
     switch (this.side()) {
       case 'left':
