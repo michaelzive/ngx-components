@@ -1,0 +1,8 @@
+{
+  "terminal.integrated.env.osx": {
+    "NODE_EXTRA_CA_CERTS": "/Users/michael190/Projects/discovery-root-ca.pem"
+  },
+  "terminal.integrated.defaultProfile.osx": "bash"  // or zsh
+}
+
+

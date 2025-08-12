@@ -9,6 +9,10 @@ export const routes: Routes = [
     path: 'multiple-docking-panel-demo',
     loadComponent: () => import('./components/docking-panel/docking-multipanel-demo.component').then(m => m.DockingMultiPanelDemoComponent)
   },
+  {
+	path: 'sample-usage',
+	loadComponent: () => import('./sample-usage.component').then(m => m.SampleUsageComponent)
+  },
 	// Legacy path retained as redirect for backward compatibility
-	{ path: '', pathMatch: 'full', redirectTo: 'multiple-docking-panel-demo' }
+	{ path: '', pathMatch: 'full', redirectTo: 'sample-usage' }
 ];

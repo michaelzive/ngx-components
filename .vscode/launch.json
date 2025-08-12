@@ -2,30 +2,19 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    
     {
-      "name": "Launch Chrome",
-      "type": "chrome",
-      "request": "attach",
-      "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
-      "name": "ng serve (wsl)",
+      "name": "ng serve",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "start (wsl clean)",
-      "url": "http://localhost:4200/",
-      "serverReadyAction": {
-        "pattern": "(Compiled successfully|Angular Live Development Server is listening|Local server is running)",
-        "uriFormat": "http://localhost:4200",
-        "action": "debugWithChrome"
-      }
+      "preLaunchTask": "npm: start",
+      "url": "http://localhost:4200/"
     },
     {
-      "name": "ng test (wsl)",
+      "name": "ng test",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "test (wsl)",
+      "preLaunchTask": "npm: test",
       "url": "http://localhost:9876/debug.html"
     }
   ]

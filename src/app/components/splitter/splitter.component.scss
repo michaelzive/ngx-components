@@ -1,0 +1,104 @@
+:root {
+  --splitter-gap: 0px;
+  --splitter-handle-size: 8px;
+  --splitter-handle-color: #d0d5dd;
+  --splitter-handle-color-active: #98a2b3;
+  --splitter-handle-radius: 6px;
+}
+
+app-splitter {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.app-splitter .splitter-root {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: var(--splitter-gap);
+  position: relative;
+}
+
+.app-splitter[data-layout="horizontal"] .splitter-root,
+app-splitter[data-layout="horizontal"] .splitter-root {
+  flex-direction: row;
+}
+
+.app-splitter[data-layout="vertical"] .splitter-root,
+app-splitter[data-layout="vertical"] .splitter-root {
+  flex-direction: column;
+}
+
+.splitter-panel {
+  overflow: auto;
+}
+
+.splitter-handle {
+  position: absolute;
+  background: var(--splitter-handle-color);
+  border-radius: var(--splitter-handle-radius);
+  transition: background 120ms ease;
+  outline: none;
+}
+
+.splitter-handle.horizontal {
+  top: 0;
+  bottom: 0;
+  width: var(--splitter-handle-size);
+  transform: translateX(calc(-1 * var(--splitter-handle-size) / 2));
+  cursor: col-resize;
+}
+
+.splitter-handle.vertical {
+  left: 0;
+  right: 0;
+  height: var(--splitter-handle-size);
+  transform: translateY(calc(-1 * var(--splitter-handle-size) / 2));
+  cursor: row-resize;
+}
+
+.splitter-handle.dragging,
+.splitter-handle:hover,
+.splitter-handle:focus-visible {
+  background: var(--splitter-handle-color-active);
+}
+
+/* Larger invisible hit area */
+.splitter-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  border-radius: inherit;
+}
+
+.splitter-handle.horizontal::before {
+  width: 16px;
+  height: 100%;
+}
+
+.splitter-handle.vertical::before {
+  width: 100%;
+  height: 16px;
+}
+
+/* Focus ring for accessibility */
+.splitter-handle:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--splitter-handle-color-active) 45%, transparent);
+}
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
