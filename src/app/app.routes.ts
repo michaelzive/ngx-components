@@ -1,18 +1,22 @@
 import { Routes } from '@angular/router';
+import { CombinedLayoutDemoComponent } from './pages/combined-layout-demo/combined-layout-demo.component';
+import { DockingMultiPanelDemoComponent, DockingPanelDemoComponent } from './components/docking-panel';
+import { SampleUsageComponent } from './sample-usage.component';
 
 export const routes: Routes = [
 	{
 		path: 'docking-panel-demo',
-		loadComponent: () => import('./components/docking-panel/docking-panel-demo.component').then(m => m.DockingPanelDemoComponent)
+		component: DockingPanelDemoComponent
 	},
   {
     path: 'multiple-docking-panel-demo',
-    loadComponent: () => import('./components/docking-panel/docking-multipanel-demo.component').then(m => m.DockingMultiPanelDemoComponent)
+    component: DockingMultiPanelDemoComponent
   },
   {
 	path: 'sample-usage',
-	loadComponent: () => import('./sample-usage.component').then(m => m.SampleUsageComponent)
+	component: SampleUsageComponent
   },
+  { path: 'combined', component: CombinedLayoutDemoComponent },
 	// Legacy path retained as redirect for backward compatibility
 	{ path: '', pathMatch: 'full', redirectTo: 'sample-usage' }
 ];

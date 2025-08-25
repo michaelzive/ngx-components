@@ -4,7 +4,11 @@
       "Bash(ng build:*)",
       "Bash(find:*)",
       "Bash(rm:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:designs.magicpath.ai)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click"
     ],
     "deny": []
   }

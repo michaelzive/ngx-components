@@ -1,0 +1,85 @@
+:root {
+  --sidebar-width: 280px;
+  --gap: 8px;
+}
+
+.combined-page {
+  display: flex;
+  height: 100vh;
+  gap: var(--gap);
+  background: var(--bg, #fff);
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: 200px;
+  border-right: 1px solid #e6e9ef;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* Panel contents style — ensure panels fill their splitter slot */
+.panel-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.panel-top {
+  background: #2563eb; /* blue */
+}
+
+.panel-bottom {
+  background: #dc2626; /* red */
+}
+
+.docking-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.docking-panel {
+  width: 250px; /* Adjust width as needed */
+  background-color: #f0f0f0; /* Light background for the docking panel */
+}
+
+.main-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.splitter {
+  height: 100%;
+  display: flex;
+}
+
+.panel {
+  flex: 1;
+  overflow: auto;
+}
+
+.blue-panel {
+  background-color: blue;
+  color: white;
+}
+
+.red-panel {
+  background-color: red;
+  color: white;
+}

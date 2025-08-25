@@ -1,0 +1,18 @@
+<div class="combined-page">
+  <aside class="sidebar" role="complementary" aria-label="Docking sidebar">
+    <app-docking-panel></app-docking-panel>
+  </aside>
+
+  <main class="content" role="main">
+    <!-- vertical splitter: top (blue) above bottom (red) -->
+    <app-splitter layout="vertical" [panelSizes]="[50, 50]">
+      <app-splitter-panel ariaLabel="Top blue panel">
+        <div class="panel-content panel-top">Top — Blue</div>
+      </app-splitter-panel>
+
+      <app-splitter-panel ariaLabel="Bottom red panel">
+        <div class="panel-content panel-bottom">Bottom — Red</div>
+      </app-splitter-panel>
+    </app-splitter>
+  </main>
+</div>
