@@ -19,14 +19,14 @@ import { MatButtonModule } from '@angular/material/button';
     <h2>Multi-Panel Docking Layout Demo</h2>
     <p>This demonstrates using <code>app-docking-layout</code> to coordinate multiple push-mode panels.</p>
 
-  <!-- Add dock-debug class to enable vivid debug colors from panel SCSS -->
-  <app-docking-layout class="multi-layout dock-debug" [includeCollapsedStripInOffset]="true" [globalAnchored]="true" globalAnchoredPushMode="collapsed">
-      <app-docking-panel side="left" mode="push" [initialSize]="280" [collapsedSize]="48" [tabs]="leftTabs"></app-docking-panel>
-      <app-docking-panel side="right" mode="push" [initialSize]="300" [collapsedSize]="48" [tabs]="rightTabs"></app-docking-panel>
-      <app-docking-panel side="top" mode="push" [initialSize]="200" [collapsedSize]="40" [tabs]="topTabs"></app-docking-panel>
-      <app-docking-panel side="bottom" mode="push" [initialSize]="180" [collapsedSize]="40" [tabs]="bottomTabs"></app-docking-panel>
+  <!-- Grid-based docking layout -->
+  <app-docking-layout class="multi-layout">
+      <app-docking-panel slot="left" [initialSize]="280" [collapsedSize]="48" [tabs]="leftTabs"></app-docking-panel>
+      <app-docking-panel slot="right" [initialSize]="300" [collapsedSize]="48" [tabs]="rightTabs"></app-docking-panel>
+      <app-docking-panel slot="top" [initialSize]="200" [collapsedSize]="40" [tabs]="topTabs"></app-docking-panel>
+      <app-docking-panel slot="bottom" [initialSize]="180" [collapsedSize]="40" [tabs]="bottomTabs"></app-docking-panel>
 
-      <div class="main-content">
+      <div slot="main" class="main-content">
         <p><strong>Main content area</strong> gets combined margins from all expanded push panels.</p>
         <p>Resize and open multiple panels; margins update live. Collapse a panel to reclaim space (collapsed strip still reserves its thickness).</p>
         <button mat-raised-button color="primary" (click)="expandAll()">Expand All</button>

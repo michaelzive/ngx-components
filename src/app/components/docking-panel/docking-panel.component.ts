@@ -48,37 +48,29 @@ import { DockingPanelTabDirective } from './docking-panel-tab.directive';
   animations: [
     trigger('panelState', [
       state('expanded-left', style({
-        transform: 'translateX(0)',
         width: '{{size}}px'
       }), { params: { size: 320 } }),
       state('collapsed-left', style({
-        transform: 'translateX(calc(-100% + {{collapsedSize}}px))',
-        width: '{{size}}px'
-      }), { params: { size: 320, collapsedSize: 48 } }),
+        width: '{{collapsedSize}}px'
+      }), { params: { collapsedSize: 48 } }),
       state('expanded-right', style({
-        transform: 'translateX(0)',
         width: '{{size}}px'
       }), { params: { size: 320 } }),
       state('collapsed-right', style({
-        transform: 'translateX(calc(100% - {{collapsedSize}}px))',
-        width: '{{size}}px'
-      }), { params: { size: 320, collapsedSize: 48 } }),
+        width: '{{collapsedSize}}px'
+      }), { params: { collapsedSize: 48 } }),
       state('expanded-top', style({
-        transform: 'translateY(0)',
         height: '{{size}}px'
       }), { params: { size: 320 } }),
       state('collapsed-top', style({
-        transform: 'translateY(calc(-100% + {{collapsedSize}}px))',
-        height: '{{size}}px'
-      }), { params: { size: 320, collapsedSize: 48 } }),
+        height: '{{collapsedSize}}px'
+      }), { params: { collapsedSize: 48 } }),
       state('expanded-bottom', style({
-        transform: 'translateY(0)',
         height: '{{size}}px'
       }), { params: { size: 320 } }),
       state('collapsed-bottom', style({
-        transform: 'translateY(calc(100% - {{collapsedSize}}px))',
-        height: '{{size}}px'
-      }), { params: { size: 320, collapsedSize: 48 } }),
+        height: '{{collapsedSize}}px'
+      }), { params: { collapsedSize: 48 } }),
       transition('* => *', animate('{{duration}}ms ease-out'))
     ]),
     trigger('contentFade', [
@@ -102,8 +94,11 @@ import { DockingPanelTabDirective } from './docking-panel-tab.directive';
   ]
 })
 export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnInit, OnChanges {
-  // Inputs as signals
-  readonly side = input<DockingSide>(DEFAULT_DOCKING_PANEL_CONFIG.side);
+  // Inputs as signals - detect side from slot attribute
+  readonly side = computed(() => {
+    const slot = this.elementRef?.nativeElement?.getAttribute('slot');
+    return (slot as DockingSide) || 'left';
+  });
   readonly mode = input<DockingMode>(DEFAULT_DOCKING_PANEL_CONFIG.mode);
   readonly hasBackdrop = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.hasBackdrop);
   readonly closeOnBackdropClick = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.closeOnBackdropClick);
@@ -114,6 +109,8 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnIni
   readonly resizable = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.resizable);
   readonly autoFocus = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.autoFocus);
   readonly animationDuration = input<number>(DEFAULT_DOCKING_PANEL_CONFIG.animationDuration);
+  readonly showHeadingWhenExpanded = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.showHeadingWhenExpanded);
+  readonly showHeadingWhenCollapsed = input<boolean>(DEFAULT_DOCKING_PANEL_CONFIG.showHeadingWhenCollapsed);
   readonly tabs = input<DockingPanelTab[]>([]);
   // When true, panel participates in external layout host which applies push margins.
   private readonly _layoutManaged = signal<boolean>(false);
@@ -148,6 +145,9 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnIni
   readonly isOverlayMode = computed(() => this.mode() === 'overlay');
   readonly isPushMode = computed(() => this.mode() === 'push');
   readonly showBackdrop = computed(() => this.hasBackdrop() && this.isExpanded() && this.isOverlayMode());
+  readonly shouldShowHeading = computed(() => 
+    this.isExpanded() ? this.showHeadingWhenExpanded() : this.showHeadingWhenCollapsed()
+  );
 
   // Tab management
   private readonly projectedTabList = signal<DockingPanelTab[]>([]);
@@ -165,7 +165,7 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnIni
   });
 
   readonly animationParams = computed(() => ({
-    size: this.currentSize(),
+    size: this.isExpanded() ? this.currentSize() : this.collapsedSize(),
     collapsedSize: this.collapsedSize(),
     duration: this.animationDuration()
   }));
@@ -199,7 +199,7 @@ export class DockingPanelComponent implements AfterContentInit, OnDestroy, OnIni
   private boundTouchMove = (e: TouchEvent) => this.onTouchMove(e);
   private boundTouchEnd = () => this.onTouchEnd();
 
-  constructor() {}
+  constructor(private elementRef: ElementRef<HTMLElement>) {}
 
   ngOnInit(): void {
     // Apply bound initial size after inputs resolved

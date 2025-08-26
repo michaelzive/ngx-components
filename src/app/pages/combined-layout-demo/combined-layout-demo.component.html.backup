@@ -118,7 +118,7 @@
             </div>
             <div class="result-item">
               <div class="result-file">📄 main.ts</div>
-              <div class="result-line">Line 3: import &#123; AppComponent &#125;</div>
+              <div class="result-line">Line 3: import { AppComponent }</div>
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@
 
     <!-- Right Docking Panel -->
     <app-docking-panel slot="right" [initialSize]="220" [collapsedSize]="32" [autoFocus]="true">
-      <ng-template dockingPanelTab="Sources" icon="info">
+      <ng-template dockingPanelTab="Details" icon="info">
         <div class="details-panel">
           <h3>Component Details</h3>
           <p>View detailed information about selected components.</p>

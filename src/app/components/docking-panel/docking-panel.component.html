@@ -45,7 +45,7 @@
         @if (tab.icon) {
           <mat-icon [fontIcon]="tab.icon"></mat-icon>
         }
-        <span class="tab-label" [class.sr-only]="isExpanded()">{{ tab.label }}</span>
+        <span class="tab-label" [class.sr-only]="!shouldShowHeading()">{{ tab.label }}</span>
       </button>
     }
   </div>

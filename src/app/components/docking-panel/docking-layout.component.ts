@@ -1,184 +1,226 @@
-import { Component, ContentChildren, QueryList, AfterContentInit, signal, computed, Input, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, AfterContentInit, signal, computed, OnDestroy, ContentChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DockingPanelComponent } from './docking-panel.component';
-import { DockingSide } from './docking-panel.interfaces';
-
-interface PanelStateSnapshot {
-  side: DockingSide;
-  expanded: boolean;
-  size: number;
-  collapsedSize: number;
-  mode: string;
-}
 
 @Component({
   selector: 'app-docking-layout',
   standalone: true,
   imports: [CommonModule],
-  host: { '[style.--docking-panel-cross-axis-transition]': 'crossAxisTransition' },
   template: `
-    <div class="docking-layout-wrapper">
-      <ng-content select="app-docking-panel"></ng-content>
-      <div class="docking-layout-main" [style.margin]="aggregateMarginStyle()">
-        <ng-content select="*:not(app-docking-panel)"></ng-content>
+    <div class="docking-layout-grid" [class]="computedGridClass()">
+      <!-- Top panel slot -->
+      <div class="grid-area-top">
+        <ng-content select="app-docking-panel[slot='top']"></ng-content>
+      </div>
+      
+      <!-- Left panel slot -->
+      <div class="grid-area-left">
+        <ng-content select="app-docking-panel[slot='left']"></ng-content>
+      </div>
+      
+      <!-- Main content slot -->
+      <div class="grid-area-main">
+        <ng-content select="[slot='main'], :not(app-docking-panel):not([slot])"></ng-content>
+      </div>
+      
+      <!-- Right panel slot -->
+      <div class="grid-area-right">
+        <ng-content select="app-docking-panel[slot='right']"></ng-content>
+      </div>
+      
+      <!-- Bottom panel slot -->
+      <div class="grid-area-bottom">
+        <ng-content select="app-docking-panel[slot='bottom']"></ng-content>
       </div>
     </div>
   `,
   styles: [`
-    :host { position: relative; display: block; width:100%; height:100%; }
-  .docking-layout-wrapper { position: relative; width:100%; height:100%; }
-  .docking-layout-main { position: relative; width:100%; height:100%; box-sizing: border-box; transition: margin 250ms ease-out; }
+    :host {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .docking-layout-grid {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      grid-template-areas: 
+        "top-panel    top-panel    top-panel"
+        "left-panel  main-content right-panel"
+        "bottom-panel bottom-panel bottom-panel";
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
+    }
+    
+    .grid-area-top { grid-area: top-panel; }
+    .grid-area-left { grid-area: left-panel; }
+    .grid-area-main { grid-area: main-content; overflow: hidden; }
+    .grid-area-right { grid-area: right-panel; }
+    .grid-area-bottom { grid-area: bottom-panel; }
+    
+    /* Hide empty grid areas */
+    .grid-area-top:empty { display: none; }
+    .grid-area-left:empty { display: none; }
+    .grid-area-right:empty { display: none; }
+    .grid-area-bottom:empty { display: none; }
+    
+    /* Dynamic grid templates based on content */
+    .no-top {
+      grid-template-areas: 
+        "left-panel  main-content right-panel"
+        "bottom-panel bottom-panel bottom-panel";
+      grid-template-rows: 1fr auto;
+    }
+    
+    .no-bottom {
+      grid-template-areas: 
+        "top-panel    top-panel    top-panel"
+        "left-panel  main-content right-panel";
+      grid-template-rows: auto 1fr;
+    }
+    
+    .no-left {
+      grid-template-areas: 
+        "top-panel    top-panel"
+        "main-content right-panel"
+        "bottom-panel bottom-panel";
+      grid-template-columns: 1fr auto;
+    }
+    
+    .no-right {
+      grid-template-areas: 
+        "top-panel    top-panel"
+        "left-panel  main-content"
+        "bottom-panel bottom-panel";
+      grid-template-columns: auto 1fr;
+    }
+    
+    .no-top.no-bottom {
+      grid-template-areas: "left-panel  main-content right-panel";
+      grid-template-rows: 1fr;
+    }
+    
+    .no-left.no-right {
+      grid-template-areas: 
+        "top-panel"
+        "main-content"
+        "bottom-panel";
+      grid-template-columns: 1fr;
+    }
+    
+    .no-top.no-left {
+      grid-template-areas: 
+        "main-content right-panel"
+        "bottom-panel bottom-panel";
+      grid-template-columns: 1fr auto;
+      grid-template-rows: 1fr auto;
+    }
+    
+    .no-top.no-right {
+      grid-template-areas: 
+        "left-panel  main-content"
+        "bottom-panel bottom-panel";
+      grid-template-columns: auto 1fr;
+      grid-template-rows: 1fr auto;
+    }
+    
+    .no-bottom.no-left {
+      grid-template-areas: 
+        "top-panel    top-panel"
+        "main-content right-panel";
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto 1fr;
+    }
+    
+    .no-bottom.no-right {
+      grid-template-areas: 
+        "top-panel    top-panel"
+        "left-panel  main-content";
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto 1fr;
+    }
+    
+    .no-top.no-bottom.no-left {
+      grid-template-areas: "main-content right-panel";
+      grid-template-columns: 1fr auto;
+      grid-template-rows: 1fr;
+    }
+    
+    .no-top.no-bottom.no-right {
+      grid-template-areas: "left-panel main-content";
+      grid-template-columns: auto 1fr;
+      grid-template-rows: 1fr;
+    }
+    
+    .no-left.no-right.no-top {
+      grid-template-areas: 
+        "main-content"
+        "bottom-panel";
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+    }
+    
+    .no-left.no-right.no-bottom {
+      grid-template-areas: 
+        "top-panel"
+        "main-content";
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+    }
+    
+    .no-panels {
+      grid-template-areas: "main-content";
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
   `]
 })
-export class DockingLayoutComponent implements AfterContentInit, OnDestroy, OnChanges {
+export class DockingLayoutComponent implements AfterContentInit, OnDestroy {
   @ContentChildren(DockingPanelComponent) panels!: QueryList<DockingPanelComponent>;
-  @Input() includeCollapsedStripInOffset = true; // whether collapsedSize contributes to push margin
-  @Input() globalAnchored = false; // when true, panels are fixed to viewport instead of container
-  @Input() manageCrossAxisClearance = true; // shift orthogonal panels so tab bars remain visible
-  @Input() crossAxisTransition = '250ms ease';
-  // When panels are globally anchored (fixed) you may not want to reserve their full expanded size.
-  // Options:
-  //  - 'full': (default) reserve full expanded size (current behavior)
-  //  - 'collapsed': always reserve only collapsed strip thickness even when expanded
-  //  - 'none': reserve nothing (content flows under panel)
-  @Input() globalAnchoredPushMode: 'full' | 'collapsed' | 'none' = 'full';
+  
+  private readonly hasTop = signal(false);
+  private readonly hasLeft = signal(false);
+  private readonly hasRight = signal(false);
+  private readonly hasBottom = signal(false);
 
-  private readonly panelsSignal = signal<PanelStateSnapshot[]>([]);
-
-  readonly aggregateOffsets = computed(() => {
-    const left = this.sumForSide('left');
-    const right = this.sumForSide('right');
-    const top = this.sumForSide('top');
-    const bottom = this.sumForSide('bottom');
-    return { top, right, bottom, left };
-  });
-
-  readonly aggregateMarginStyle = computed(() => {
-    const o = this.aggregateOffsets();
-    return `${o.top}px ${o.right}px ${o.bottom}px ${o.left}px`;
+  readonly computedGridClass = computed(() => {
+    const classes = [];
+    if (!this.hasTop()) classes.push('no-top');
+    if (!this.hasLeft()) classes.push('no-left');
+    if (!this.hasRight()) classes.push('no-right');
+    if (!this.hasBottom()) classes.push('no-bottom');
+    
+    if (classes.length === 4) {
+      return 'no-panels';
+    }
+    
+    return classes.join(' ');
   });
 
   ngAfterContentInit(): void {
-    this.capturePanelStates();
-    // Mark panels as layout-managed
-    this.panels.forEach(p => {
-      (p as any).layoutManaged = true;
-      (p as any).globalAnchored = this.globalAnchored;
-    });
-  this.applyCrossAxisOffsets();
-
-    // Listen to panel output events to refresh snapshot (avoid effect() outside injection ctx)
-    this.panels.forEach(panel => {
-      const update = () => {
-        const snap: PanelStateSnapshot = {
-          side: panel.side(),
-          expanded: panel.isExpanded(),
-          size: panel.currentSize(),
-          collapsedSize: panel.collapsedSize(),
-          mode: panel.mode()
-        };
-        this.updatePanel(panel, snap);
-  this.applyCrossAxisOffsets();
-      };
-      // Store subscriptions for cleanup
-      const subs: any[] = [];
-      subs.push(panel.stateChange.subscribe(update));
-      subs.push(panel.sizeChange.subscribe(update));
-      // Initial capture
-      update();
-      (panel as any).__layoutSubs = subs;
-    });
-
+    // Initial panel detection
+    this.updatePanelStates();
+    
+    // Listen for changes to panel list
     this.panels.changes.subscribe(() => {
-      this.panels.forEach(p => {
-        (p as any).layoutManaged = true;
-        (p as any).globalAnchored = this.globalAnchored;
-      });
-      this.capturePanelStates();
-  this.applyCrossAxisOffsets();
+      this.updatePanelStates();
     });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['globalAnchored'] && this.panels) {
-      this.panels.forEach(p => (p as any).globalAnchored = this.globalAnchored);
-    }
-    if (changes['manageCrossAxisClearance']) {
-      this.applyCrossAxisOffsets();
-    }
-  }
-
-  private applyCrossAxisOffsets() {
-    if (!this.manageCrossAxisClearance || !this.panels) return;
-    const offsets = this.aggregateOffsets();
-    this.panels.forEach(panel => {
-      const side = panel.side();
-      let top = 0, bottom = 0, left = 0, right = 0;
-      if (side === 'left' || side === 'right') {
-        top = offsets.top;
-        bottom = offsets.bottom;
-      } else if (side === 'top' || side === 'bottom') {
-        left = offsets.left;
-        right = offsets.right;
-      }
-      (panel as any).setCrossAxisOffsets?.({ top, bottom, left, right });
-    });
-  }
-
-  private updatePanel(panel: DockingPanelComponent, snap: PanelStateSnapshot) {
-    const current = this.panelsSignal();
-    const idx = current.findIndex(s => s === (panel as any).__snapRef);
-    if (idx >= 0) {
-      const clone = [...current];
-      clone[idx] = snap;
-      (panel as any).__snapRef = snap;
-      this.panelsSignal.set(clone);
-    } else {
-      (panel as any).__snapRef = snap;
-      this.panelsSignal.set([...current, snap]);
-    }
   }
 
   ngOnDestroy(): void {
-    this.panels?.forEach(p => {
-      const subs: any[] = (p as any).__layoutSubs;
-      subs?.forEach(s => s.unsubscribe?.());
-    });
+    // Clean up is handled automatically by Angular
   }
 
-  private capturePanelStates() {
-    const snaps: PanelStateSnapshot[] = this.panels.map(p => ({
-      side: p.side(),
-      expanded: p.isExpanded(),
-      size: p.currentSize(),
-      collapsedSize: p.collapsedSize(),
-      mode: p.mode()
-    }));
-    this.panels.forEach((p,i)=> (p as any).__snapRef = snaps[i]);
-    this.panelsSignal.set(snaps);
-  }
-
-  private sumForSide(side: DockingSide): number {
-    return this.panelsSignal()
-      .filter(p => p.side === side && p.mode === 'push')
-      .reduce((acc, p) => {
-        const anchored = this.globalAnchored;
-        if (anchored) {
-          switch (this.globalAnchoredPushMode) {
-            case 'none':
-              return acc; // never push
-            case 'collapsed':
-              // always reserve collapsed thickness if configured to include it
-              return acc + (this.includeCollapsedStripInOffset ? p.collapsedSize : 0);
-            case 'full':
-            default:
-              // fall through to normal logic
-              break;
-          }
-        }
-        if (p.expanded) return acc + p.size;
-        if (this.includeCollapsedStripInOffset) return acc + p.collapsedSize;
-        return acc;
-      }, 0);
+  private updatePanelStates(): void {
+    // Use ContentChildren to detect panels by their slot attribute
+    const panelArray = this.panels?.toArray() || [];
+    
+    this.hasTop.set(panelArray.some(panel => panel.side() === 'top'));
+    this.hasLeft.set(panelArray.some(panel => panel.side() === 'left'));
+    this.hasRight.set(panelArray.some(panel => panel.side() === 'right'));
+    this.hasBottom.set(panelArray.some(panel => panel.side() === 'bottom'));
   }
 }

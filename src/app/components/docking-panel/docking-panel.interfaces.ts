@@ -25,6 +25,8 @@ export interface DockingPanelConfig {
   resizable: boolean;
   autoFocus: boolean;
   animationDuration: number;
+  showHeadingWhenExpanded: boolean;
+  showHeadingWhenCollapsed: boolean;
 }
 
 export interface DockingPanelTabChangeEvent {
@@ -58,5 +60,7 @@ export const DEFAULT_DOCKING_PANEL_CONFIG: DockingPanelConfig = {
   collapsedSize: 48,
   resizable: true,
   autoFocus: false,
-  animationDuration: 250
+  animationDuration: 250,
+  showHeadingWhenExpanded: false,
+  showHeadingWhenCollapsed: true
 };

@@ -143,6 +143,21 @@ import {
               </mat-checkbox>
             </div>
 
+            <!-- Heading Visibility -->
+            <div class="control-group">
+              <label>Tab Heading Visibility</label>
+              <mat-checkbox
+                [checked]="showHeadingWhenExpanded()"
+                (change)="showHeadingWhenExpanded.set($event.checked); onConfigChange()">
+                Show Headings When Expanded
+              </mat-checkbox>
+              <mat-checkbox
+                [checked]="showHeadingWhenCollapsed()"
+                (change)="showHeadingWhenCollapsed.set($event.checked); onConfigChange()">
+                Show Headings When Collapsed
+              </mat-checkbox>
+            </div>
+
             <!-- Tab Management -->
             <div class="control-group">
               <label>Tab Management</label>
@@ -192,7 +207,7 @@ import {
       <!-- Global Docking Panel (full viewport) -->
       <div class="global-docking-wrapper">
         <app-docking-panel
-          [side]="dockSide()"
+          [slot]="dockSide()"
           [mode]="dockMode()"
           [hasBackdrop]="hasBackdrop()"
           [closeOnBackdropClick]="closeOnBackdropClick()"
@@ -203,6 +218,8 @@ import {
           [resizable]="resizable()"
           [autoFocus]="autoFocus()"
           [animationDuration]="animationDuration()"
+          [showHeadingWhenExpanded]="showHeadingWhenExpanded()"
+          [showHeadingWhenCollapsed]="showHeadingWhenCollapsed()"
           [tabs]="dynamicTabs()"
           (tabChange)="onTabChange($event)"
           (stateChange)="onStateChange($event)"
@@ -606,6 +623,8 @@ export class DockingPanelDemoComponent {
   resizable = signal(true);
   autoFocus = signal(false);
   animationDuration = signal(250);
+  showHeadingWhenExpanded = signal(false);
+  showHeadingWhenCollapsed = signal(true);
 
   // Dynamic tabs
   private tabCounter = 0;
